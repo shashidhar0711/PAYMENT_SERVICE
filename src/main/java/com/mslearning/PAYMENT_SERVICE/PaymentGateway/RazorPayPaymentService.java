@@ -19,7 +19,7 @@ public class RazorPayPaymentService implements PaymentGateway{
     }
 
     @Override
-    public String generatePaymentLink(Long orderId, Long amount) throws RazorpayException {
+    public PaymentLink generatePaymentLink(Long ticketId, Long amount) throws RazorpayException {
 
         // ORDER DETAILS
         JSONObject paymentLinkRequest = new JSONObject();
@@ -35,8 +35,8 @@ public class RazorPayPaymentService implements PaymentGateway{
         System.out.println("Expire Epoch  : " + expireBy);
 
         paymentLinkRequest.put("expire_by", expireBy);
-        paymentLinkRequest.put("reference_id", orderId.toString());
-        paymentLinkRequest.put("description","Payment for orderId " + orderId.toString());
+        paymentLinkRequest.put("reference_id", ticketId.toString());
+        paymentLinkRequest.put("description","Payment for orderId: " + ticketId.toString());
 
 
         // CUSTOMER DETAILS
@@ -59,6 +59,6 @@ public class RazorPayPaymentService implements PaymentGateway{
         paymentLinkRequest.put("callback_method","get");
 
         PaymentLink paymentLink = this.razorpayClient.paymentLink.create(paymentLinkRequest);
-        return paymentLink.toString();
+        return paymentLink;
     }
 }

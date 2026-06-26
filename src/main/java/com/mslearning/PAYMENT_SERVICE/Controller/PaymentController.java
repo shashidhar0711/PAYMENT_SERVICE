@@ -1,5 +1,6 @@
 package com.mslearning.PAYMENT_SERVICE.Controller;
 
+import com.mslearning.PAYMENT_SERVICE.Dto.CreatePaymentResponseDto;
 import com.mslearning.PAYMENT_SERVICE.Dto.PaymentRequest;
 import com.mslearning.PAYMENT_SERVICE.Services.PaymentService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,9 +18,9 @@ public class PaymentController {
     }
 
     @PostMapping("/")
-    public String IntiatePayment(@RequestBody PaymentRequest request) {
+    public CreatePaymentResponseDto IntiatePayment(@RequestBody PaymentRequest request) {
         try {
-            return this.paymentService.initiatePayment(request.getOrderId(), request.getAmount());
+            return this.paymentService.initiatePayment(request.getTicketId());
         } catch(Exception e) {
             e.printStackTrace();
         }
