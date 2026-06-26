@@ -3,10 +3,8 @@ package com.mslearning.PAYMENT_SERVICE.Controller;
 import com.mslearning.PAYMENT_SERVICE.Dto.CreatePaymentResponseDto;
 import com.mslearning.PAYMENT_SERVICE.Dto.PaymentRequest;
 import com.mslearning.PAYMENT_SERVICE.Services.PaymentService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/payments")
@@ -25,5 +23,16 @@ public class PaymentController {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @PostMapping("/webhook")
+    public ResponseEntity<Void> webhook(
+            @RequestBody String payload,
+            @RequestHeader("X-Razorpay-Signature") String razorpaySignature)
+            throws Exception {
+
+        paymentService.processWebhook(payload, razorpaySignature);
+
+        return ResponseEntity.ok().build();
     }
 }
