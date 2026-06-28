@@ -3,6 +3,8 @@ package com.mslearning.PAYMENT_SERVICE.Services;
 import com.mslearning.PAYMENT_SERVICE.Dto.CreatePaymentResponseDto;
 import com.mslearning.PAYMENT_SERVICE.Dto.PaymentSuccessRequestDto;
 import com.mslearning.PAYMENT_SERVICE.Dto.TicketDetailsDto;
+import com.mslearning.PAYMENT_SERVICE.Exception.InvalidWebhookSignatureException;
+import com.mslearning.PAYMENT_SERVICE.Exception.PaymentNotFoundException;
 import com.mslearning.PAYMENT_SERVICE.Model.Payment;
 import com.mslearning.PAYMENT_SERVICE.Model.PaymentStatus;
 import com.mslearning.PAYMENT_SERVICE.PaymentGateway.PaymentGateway;
@@ -62,7 +64,7 @@ public class PaymentService {
         return response;
     }
 
-    public void processWebhook(String payload, String razorpaySignature) throws RazorpayException {
+    public void processWebhook(String payload, String razorpaySignature) throws RazorpayException, InvalidWebhookSignatureException {
         // Verify webhook signature
         boolean valid = Utils.verifyWebhookSignature(
                 payload,
@@ -71,7 +73,7 @@ public class PaymentService {
         );
 
         if (!valid) {
-            throw new RuntimeException("Invalid webhook signature");
+            throw new InvalidWebhookSignatureException("Invalid webhook signature");
         }
 
         JSONObject json = new JSONObject(payload);
@@ -112,5 +114,17 @@ public class PaymentService {
                 request,
                 Void.class
         );
+    }
+
+    public Payment getPaymentById(Long paymentId) throws PaymentNotFoundException {
+        return paymentRepository.findById(paymentId)
+                .orElseThrow(() ->
+                        new PaymentNotFoundException("Payment not found."));
+    }
+
+    public Payment getPaymentByTicketId(Long ticketId) throws PaymentNotFoundException {
+        return paymentRepository.findByTicketId(ticketId)
+                .orElseThrow(() ->
+                        new PaymentNotFoundException("Payment not found."));
     }
 }
