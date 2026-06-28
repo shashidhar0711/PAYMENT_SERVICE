@@ -1,6 +1,7 @@
 package com.mslearning.PAYMENT_SERVICE.Services;
 
 import com.mslearning.PAYMENT_SERVICE.Dto.CreatePaymentResponseDto;
+import com.mslearning.PAYMENT_SERVICE.Dto.PaymentSuccessEvent;
 import com.mslearning.PAYMENT_SERVICE.Dto.PaymentSuccessRequestDto;
 import com.mslearning.PAYMENT_SERVICE.Dto.TicketDetailsDto;
 import com.mslearning.PAYMENT_SERVICE.Exception.InvalidWebhookSignatureException;
@@ -22,16 +23,19 @@ public class PaymentService {
     private PaymentGateway paymentGateway;
     private RestTemplate restTemplate;
     private PaymentRepository paymentRepository;
+    private PaymentEventProducerServiceImpl paymentEventProducer;
 
     @Value("${razorpay.webhook.secret}")
     private String webhookSecret;
 
     public PaymentService(PaymentGateway paymentGateway,
                           RestTemplate restTemplate,
-                          PaymentRepository paymentRepository) {
+                          PaymentRepository paymentRepository,
+                          PaymentEventProducerServiceImpl paymentEventProducer) {
         this.paymentGateway = paymentGateway;
         this.restTemplate = restTemplate;
         this.paymentRepository = paymentRepository;
+        this.paymentEventProducer = paymentEventProducer;
     }
 
     public CreatePaymentResponseDto initiatePayment(Long ticketId) throws RazorpayException {
@@ -104,16 +108,26 @@ public class PaymentService {
         savedPayment.setPaymentStatus(PaymentStatus.SUCCESS);
         paymentRepository.save(savedPayment);
 
-        PaymentSuccessRequestDto request = new PaymentSuccessRequestDto();
 
-        request.setTicketId(ticketId);
-        request.setGatewayPaymentId(razorpayPaymentId);
+        // REST call to book my show
+//        PaymentSuccessRequestDto request = new PaymentSuccessRequestDto();
+//
+//        request.setTicketId(ticketId);
+//        request.setGatewayPaymentId(razorpayPaymentId);
+//
+//        restTemplate.postForObject(
+//                "http://localhost:8081/tickets/internal/payment-success",
+//                request,
+//                Void.class
+//        );
 
-        restTemplate.postForObject(
-                "http://localhost:8081/tickets/internal/payment-success",
-                request,
-                Void.class
-        );
+        //publish the event
+        PaymentSuccessEvent paymentSuccessEvent = new PaymentSuccessEvent();
+        paymentSuccessEvent.setTicketId(Math.toIntExact(ticketId));
+        paymentSuccessEvent.setAmount(savedPayment.getAmount());
+        paymentSuccessEvent.setRazorpayPaymentId(razorpayPaymentId);
+
+        this.paymentEventProducer.publish(paymentSuccessEvent);
     }
 
     public Payment getPaymentById(Long paymentId) throws PaymentNotFoundException {
